@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Giveaway Central - Win Big!</title>
+  
+  <link rel="stylesheet" href="index.css" type="text/css" media="all" />
+</head>
+<body>
+
+  <!-- Hero Section -->
+  <header>
+    <h1>Win Big Every Week!</h1>
+    <p>Join our weekly giveaway and stand a chance to win amazing prizes. Sign up now!</p>
+    <div class="center">
+      <button onclick="showSection('signup')" class="btn-outline">Sign Up</button>
+      <button onclick="showSection('login')" class="btn-outline">Login</button>
+      <button onclick="toggleAdmin()" class="btn-outline">Admin</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="container">
+
+    <!-- Sign-Up Form -->
+    <div id="signup-section" class="section hidden">
+      <h2>Join the Giveaway</h2>
+      <form id="signup-form">
+        <input type="text" id="name" placeholder="Your Name" required />
+        <input type="email" id="email" placeholder="Your Email" required />
+        <input type="password" id="password" placeholder="Create Password" required />
+        <button type="submit">Sign Up</button>
+      </form>
+    </div>
+
+    <!-- Login Form -->
+    <div id="login-section" class="section hidden">
+      <h2>Login to Your Account</h2>
+      <form id="login-form">
+        <input type="email" id="login-email" placeholder="Email" required />
+        <input type="password" id="login-password" placeholder="Password" required />
+        <button type="submit">Login</button>
+      </form>
+    </div>
+
+    <!-- Admin Login -->
+    <div id="admin-login-section" class="section hidden">
+      <h2>Admin Login</h2>
+      <form id="admin-login-form">
+        <input type="text" id="admin-user" placeholder="Username" required />
+        <input type="password" id="admin-pass" placeholder="Password" required />
+        <button type="submit">Login as Admin</button>
+      </form>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="admin-dashboard" class="section hidden">
+      <h2>Admin Dashboard</h2>
+      <h3>Registered Clients</h3>
+      <div id="user-list"></div>
+
+      <h3>Login Logs</h3>
+      <div id="login-log"></div>
+
+      <button onclick="loadUsers(); loadLogins();">Refresh</button>
+      <button onclick="clearAll()" style="background-color: crimson;">Clear All Data</button>
+      <button onclick="logoutAdmin()">Logout</button>
+    </div>
+  </div>
+
+  <!-- Script -->
+  <script>
+    const signupForm = document.getElementById("signup-form");
+    const loginForm = document.getElementById("login-form");
+    const adminLoginForm = document.getElementById("admin-login-form");
+
+    const signupSection = document.getElementById("signup-section");
+    const loginSection = document.getElementById("login-section");
+    const adminLoginSection = document.getElementById("admin-login-section");
+    const adminDashboard = document.getElementById("admin-dashboard");
+
+    const userList = document.getElementById("user-list");
+    const loginLog = document.getElementById("login-log");
+
+    const ADMIN_USERNAME = "admin";
+    const ADMIN_PASSWORD = "admin123";
+
+    function showSection(id) {
+      signupSection.classList.add("hidden");
+      loginSection.classList.add("hidden");
+      adminLoginSection.classList.add("hidden");
+
+      if (id === "signup") signupSection.classList.remove("hidden");
+      if (id === "login") loginSection.classList.remove("hidden");
+    }
+
+    function toggleAdmin() {
+      adminLoginSection.classList.toggle("hidden");
+    }
+
+    signupForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      let users = JSON.parse(localStorage.getItem("users")) || [];
+
+      if (users.some(u => u.email === email)) {
+        alert("Email already registered.");
+        return;
+      }
+
+      users.push({ name, email, password });
+      localStorage.setItem("users", JSON.stringify(users));
+      alert("Sign up successful!");
+      signupForm.reset();
+    });
+
+    loginForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      const user = users.find(u => u.email === email && u.password === password);
+
+      if (user) {
+        const logins = JSON.parse(localStorage.getItem("logins")) || [];
+        logins.push({ name: user.name, email: user.email, time: new Date().toLocaleString() });
+        localStorage.setItem("logins", JSON.stringify(logins));
+        alert("Login successful!");
+        loginForm.reset();
+      } else {
+        alert("Invalid login.");
+      }
+    });
+
+    adminLoginForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const user = document.getElementById("admin-user").value;
+      const pass = document.getElementById("admin-pass").value;
+
+      if (user === ADMIN_USERNAME && pass === ADMIN_PASSWORD) {
+        alert("Admin login successful.");
+        showDashboard();
+      } else {
+        alert("Wrong admin credentials.");
+      }
+    });
+
+    function showDashboard() {
+      signupSection.classList.add("hidden");
+      loginSection.classList.add("hidden");
+      adminLoginSection.classList.add("hidden");
+      adminDashboard.classList.remove("hidden");
+      loadUsers();
+      loadLogins();
+    }
+
+    function logoutAdmin() {
+      adminDashboard.classList.add("hidden");
+      alert("Logged out as admin.");
+    }
+
+    function loadUsers() {
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      userList.innerHTML = users.length
+        ? `<ul>${users.map((u, i) => `<li><strong>${i + 1}.</strong> ${u.name} - ${u.email} - Password: ${u.password}</li>`).join("")}</ul>`
+        : "<p>No users found.</p>";
+    }
+
+    function loadLogins() {
+      const logins = JSON.parse(localStorage.getItem("logins")) || [];
+      loginLog.innerHTML = logins.length
+        ? `<ul>${logins.map((l, i) => `<li><strong>${i + 1}.</strong> ${l.name} (${l.email}) logged in at ${l.time}</li>`).join("")}</ul>`
+        : "<p>No login history.</p>";
+    }
+
+    function clearAll() {
+      if (confirm("Delete all users and login history?")) {
+        localStorage.removeItem("users");
+        localStorage.removeItem("logins");
+        loadUsers();
+        loadLogins();
+      }
+    }
+  </script>
+</body>
+</html>
